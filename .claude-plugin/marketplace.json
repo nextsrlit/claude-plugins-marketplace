@@ -1,5 +1,6 @@
 {
   "name": "next-plugins",
+  "description": "Next internal Claude Code plugins: call diarization and git commit reporting",
   "owner": {
     "name": "Francesco Strappini",
     "email": "f.strappini@mynext.it"

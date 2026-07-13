@@ -1,58 +1,58 @@
 # claude-plugins-marketplace
 
-Marketplace di plugin per [Claude Code](https://code.claude.com), pubblicati e mantenuti da Next.
+Marketplace of plugins for [Claude Code](https://code.claude.com), published and maintained by Next.
 
-## Installazione
+## Installation
 
 ```
 /plugin marketplace add nextsrlit/claude-plugins-marketplace
 ```
 
-Poi installa i plugin che ti interessano:
+Then install the plugins you need:
 
 ```
 /plugin install diarize-call@next-plugins
 /plugin install commit-report@next-plugins
 ```
 
-## Plugin disponibili
+## Available plugins
 
 ### `diarize-call`
 
-Trascrive e diarizza chiamate/meeting registrati (OBS, Teams, Meet) o qualsiasi file audio/video. Produce:
+Transcribes and diarizes recorded calls/meetings (OBS, Teams, Meet) or any audio/video file. Produces:
 
-- trascrizione con speaker diarization
-- identificazione dei partecipanti reali leggendo i frame dove Teams/Meet evidenzia chi parla
-- riassunto narrativo della call
+- speaker-diarized transcript
+- identification of real participants by reading frames where Teams/Meet highlights who is speaking
+- narrative summary of the call
 
-Uso tipico: "trascrivi questa call", "riassumi il meeting", "chi ha detto cosa in questo video", "diarizza questo".
+Typical use: "transcribe this call", "summarize the meeting", "who said what in this video", "diarize this".
 
 ### `commit-report`
 
-Estrae i commit git da uno o più repository su un intervallo di date e produce:
+Extracts git commits from one or more repositories over a date range and produces:
 
-1. statistiche per contributor: numero commit, righe aggiunte/rimosse per repo e totale
-2. review di qualità del codice per ogni commit, confrontata con le best practice del repo (CLAUDE.md/AGENTS.md) se presenti, altrimenti con best practice generiche per lo stack rilevato
+1. per-contributor stats: commit count, lines added/removed per repo and total
+2. code-quality review of each commit, checked against the repo's own best-practices file (CLAUDE.md/AGENTS.md) when present, otherwise against general best practices for the detected stack
 
-Il risultato è una dashboard HTML self-contained pubblicata via Artifact.
+The result is a self-contained HTML dashboard published via Artifact.
 
-Uso tipico: "commit report", "report commit di ieri", "statistiche commit", "report qualità commit per [utente]".
+Typical use: "commit report", "yesterday's commits report", "commit stats", "commit quality report for [user]".
 
-## Sviluppo
+## Development
 
-Repo separato dai plugin installati in `~/.claude` — modifica qui, testa con marketplace locale:
+Kept separate from the plugins installed in `~/.claude` — edit here, test with a local marketplace:
 
 ```
 /plugin marketplace add ~/code/claude-plugins-marketplace
 /plugin marketplace update
 ```
 
-Poi push su questo repo per rendere disponibili gli aggiornamenti a tutti.
+Push to this repo to make updates available to everyone.
 
-## Struttura
+## Structure
 
 ```
-.claude-plugin/marketplace.json      # catalogo marketplace
+.claude-plugin/marketplace.json      # marketplace catalog
 plugins/
   diarize-call-plugin/
     .claude-plugin/plugin.json
