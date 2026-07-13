@@ -1,0 +1,5 @@
+{
+  "name": "diarize-call-plugin",
+  "description": "Transcribes and diarizes recorded calls/meetings, identifies speakers, produces narrative summary",
+  "version": "1.0.0"
+}

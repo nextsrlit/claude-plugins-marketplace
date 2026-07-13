@@ -1,0 +1,5 @@
+{
+  "name": "commit-report-plugin",
+  "description": "Extracts git commits over a date range and produces per-contributor stats plus code-quality review dashboard",
+  "version": "1.0.0"
+}

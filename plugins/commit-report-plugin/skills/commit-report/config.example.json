@@ -1,0 +1,19 @@
+{
+  "$comment": "Copy to commit-report.config.json in your working directory. All fields optional — the skill auto-detects repos, commit URLs, and CLAUDE.md/AGENTS.md guidelines when omitted.",
+  "repos": [
+    {
+      "name": "frontend",
+      "path": "/code/frontend",
+      "commitUrlTemplate": "https://github.com/acme/frontend/commit/{hash}"
+    },
+    {
+      "name": "backend",
+      "path": "/code/backend",
+      "guidelines": ["CLAUDE.md", "doc/PATTERNS.md"]
+    }
+  ],
+  "publish": {
+    "scp": "deploy@office.example.com:/var/www/html/commit-report/{file}",
+    "webUrl": "https://office.example.com/commit-report/{file}"
+  }
+}
