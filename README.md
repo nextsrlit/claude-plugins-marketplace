@@ -4,15 +4,29 @@ Marketplace of plugins for [Claude Code](https://code.claude.com), published and
 
 ## Installation
 
+Add this marketplace once:
+
 ```
 /plugin marketplace add nextsrlit/claude-plugins-marketplace
 ```
 
-Then install the plugins you need:
+Then install only the plugin(s) you need — each is independent:
 
 ```
 /plugin install diarize-call@next-plugins
+```
+
+```
 /plugin install commit-report@next-plugins
+```
+
+Restart the Claude Code session after installing for the new commands to load.
+
+Same thing from a shell (non-interactive):
+
+```
+claude plugin marketplace add nextsrlit/claude-plugins-marketplace
+claude plugin install diarize-call@next-plugins
 ```
 
 ## Available plugins
