@@ -89,16 +89,22 @@ git -C <path> fetch --all --quiet 2>&1 || true
 Then run the log:
 
 ```bash
-git -C <path> log --all --no-merges \
+git -C <path> log --all --source --no-merges \
   --since="YYYY-MM-DD 00:00:00" \
   --until="YYYY-MM-DD 23:59:59" \
-  --pretty=format:"%H|||%ae|||%an|||%s" \
+  --pretty=format:"%H|||%ae|||%an|||%s|||%S" \
   --numstat \
   [--author="<pattern>"]   # only if a user filter was requested
 ```
 
-**Parse output**: lines alternate between `%H|||%ae|||%an|||%s` headers and numstat rows
+**Parse output**: lines alternate between `%H|||%ae|||%an|||%s|||%S` headers and numstat rows
 (`+\t-\tfile`). Aggregate per author (use `%ae` as the key, `%an` as the display name).
+
+**Branch**: `%S` (needs `--source`) gives the ref through which the commit was reached — strip
+any `refs/heads/`, `refs/remotes/origin/`, or `origin/` prefix to get the short branch name
+(e.g. `master`, `feature/x`). If it resolves to `HEAD` or is empty, fall back to
+`git -C <path> branch --all --contains <hash> | head -1` (strip leading `*`/whitespace and
+`remotes/origin/`). Keep this branch name attached to the commit for Step 3/4/6 display.
 
 **Exclude merge commits** with `--no-merges` (already in the command above).
 
@@ -136,6 +142,10 @@ Resolve each repo's commit-URL template in this order:
 
 In `href` attributes use the **full** 40-char hash. Show only the first 8 chars as visible text.
 
+**Branch tag**: everywhere a hash is shown (details table, per-commit quality output, HTML cards),
+put the branch name right after it, separated by ` ⎇ `, e.g. `d1dd59d7 ⎇ master`. The `⎇` glyph +
+branch name is not part of the link — only the hash is clickable.
+
 ## Step 3 — Per-repo detail
 
 For each repo with at least 1 commit, a section:
@@ -143,7 +153,8 @@ For each repo with at least 1 commit, a section:
 ### 📦 Repo: <name>
 | Commit | Author | Message | +lines | -lines | Files |
 ```
-Use the short hash (8 chars) as the visible text, linked to the commit (see "Commit links").
+Use the short hash (8 chars) as the visible text, linked to the commit, followed by ` ⎇ <branch>`
+(see "Commit links"), e.g. `d1dd59d7 ⎇ master`.
 
 ## Step 4 — Code-quality review (per repo)
 
@@ -205,7 +216,7 @@ Show this badge next to the repo name in the quality section header and in the p
 ### Per-commit quality output
 
 ```
-#### [short-hash] — [message]
+#### [short-hash] ⎇ [branch] — [message]
 - **Author**: [name]
 - **Files**: [main files]
 - **Quality**: ✅/🟡/🟠/🔴 [level]
@@ -313,12 +324,13 @@ Total +lines · Total −lines. Sort by Total commits desc.
 #### 5. Per-repo commit detail (JS accordion)
 One collapsible block per repo. Each commit is a `.commit-card` with:
 - `border-left: 3px solid var(--accent)` (cycle a few accent colors across repos for contrast)
-- Header: `<a href="{commit_url}" target="_blank" class="hash">{short_hash}</a>` · message ·
-  time · author
+- Header: `<a href="{commit_url}" target="_blank" class="hash">{short_hash}</a> <span class="branch">⎇ {branch}</span>` ·
+  message · time · author
 - Main files row
 - Stats +lines / −lines
 
-**Hashes are always clickable links** (see "Commit links").
+**Hashes are always clickable links** (see "Commit links"), immediately followed by their
+`⎇ {branch}` tag.
 
 #### 6. Quality review (only for reviewed repos)
 One `.quality-card` per commit:
@@ -326,6 +338,7 @@ One `.quality-card` per commit:
 <div class="quality-card">
   <div class="qcard-header">
     <a href="{commit_url}" target="_blank" class="hash">{short_hash}</a>
+    <span class="branch">⎇ {branch}</span>
     <span class="badge q-ok|q-warn|q-impr|q-bad">✅/🟡/🟠/🔴 Level</span>
     <span class="qcard-msg">{message}</span>
     <span class="qcard-author">{author} · {time}</span>
