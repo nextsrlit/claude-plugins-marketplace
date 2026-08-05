@@ -1,0 +1,35 @@
+{
+  "_comment": "Copy to <project>/tickets/_config.json and edit. Every field is optional; defaults are in scripts/tk.js DEFAULT_CONFIG. Ticket IDs are plain integers and the schema is English — every classification (phase, kind, area) is a tag.",
+
+  "name": "Acme — Project X",
+  "title": "Acme — Project X ticket status",
+  "lang": "en",
+
+  "idPad": 3,
+  "bodySection": "Description",
+
+  "priorities": ["high", "medium", "low"],
+  "statuses": ["open", "in-progress", "waiting", "closed"],
+
+  "knownTags": ["bug", "feature", "backend", "frontend"],
+  "tagLabels": {
+    "bug": "Bug",
+    "feature": "Feature",
+    "backend": "Backend",
+    "frontend": "Frontend"
+  },
+
+  "people": {
+    "internal": ["Jane Doe"],
+    "internalLabel": "Internal",
+    "aliases": { "Jane": "Jane Doe" }
+  },
+
+  "report": {
+    "file": "acme-tickets.html",
+    "host": "next-main-server",
+    "path": "/var/www/html/artifacts",
+    "url": "https://office.mynext.it/artifacts/acme-tickets.html",
+    "windowDays": 14
+  }
+}

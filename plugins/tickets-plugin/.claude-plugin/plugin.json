@@ -1,0 +1,9 @@
+{
+  "name": "tickets-plugin",
+  "description": "File-based ticket tracker: markdown tickets with YAML frontmatter, tk CLI, validation and client-facing HTML status reports",
+  "version": "1.0.0",
+  "author": {
+    "name": "Francesco Strappini",
+    "email": "f.strappini@mynext.it"
+  }
+}

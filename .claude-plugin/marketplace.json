@@ -1,6 +1,6 @@
 {
   "name": "next-plugins",
-  "description": "Next internal Claude Code plugins: call diarization and git commit reporting",
+  "description": "Next internal Claude Code plugins: call diarization, git commit reporting and file-based ticket tracking",
   "owner": {
     "name": "Francesco Strappini",
     "email": "f.strappini@mynext.it"
@@ -17,6 +17,12 @@
       "source": "./plugins/commit-report-plugin",
       "description": "Extracts git commits over a date range and produces per-contributor stats plus code-quality review dashboard",
       "version": "1.0.1"
+    },
+    {
+      "name": "tickets",
+      "source": "./plugins/tickets-plugin",
+      "description": "File-based ticket tracker: markdown tickets with YAML frontmatter, tk CLI, validation and client-facing HTML status reports",
+      "version": "1.0.0"
     }
   ]
 }

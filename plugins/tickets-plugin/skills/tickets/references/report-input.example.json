@@ -1,0 +1,68 @@
+{
+  "lang": "it",
+  "title": "Acme — Stato Ticket Progetto X",
+  "subtitle": "Aggiornato al 03/08/2026 · ticket aperti e ticket chiusi nelle ultime 2 settimane (20 luglio – 3 agosto 2026)",
+
+  "cards": [
+    { "n": 21, "l": "Aperti" },
+    { "n": 1, "l": "Priorità alta", "style": "alta" },
+    { "n": 3, "l": "In attesa", "style": "wait" },
+    { "n": 14, "l": "Chiusi in 2 settimane", "style": "ok" },
+    { "n": 145, "l": "Chiusi totali", "style": "ok" }
+  ],
+
+  "sections": [
+    {
+      "title": "Priorità alta",
+      "pill": { "text": "1", "style": "alta" },
+      "columns": ["ID", "Area", "Titolo / descrizione", "Richiedente", "Aperto il"],
+      "rows": [
+        {
+          "id": "112",
+          "cells": ["MP"],
+          "title": "Una unità di carico agganciata a più lotti",
+          "desc": "Durante la conferma di ingresso il collo <code>7501637895</code> viene associato a due lotti: spostando un articolo se ne muovono due.",
+          "tail": ["Mario Rossi", "28/07/2026"]
+        }
+      ]
+    },
+    {
+      "title": "Aperti — priorità media",
+      "pill": { "text": "2", "style": "media" },
+      "columns": ["ID", "Area", "Titolo / descrizione", "Richiedente", "Aperto il"],
+      "rows": [
+        {
+          "id": "116",
+          "cells": ["MP"],
+          "title": "Pesi per unità contro peso complessivo letto dall'operatore",
+          "badges": [{ "text": "in attesa", "style": "wait" }],
+          "desc": "In attesa di conferma dal cliente sui casi di esempio inviati.",
+          "tail": ["Next", "30/07/2026"]
+        },
+        {
+          "id": "104",
+          "cells": ["MP + PF"],
+          "title": "Viste in sola lettura con utente dedicato",
+          "desc": "Verificare la creazione di viste accessibili in sola lettura, più versione ODBC.",
+          "tail": ["Mario Rossi", "N/D"]
+        }
+      ]
+    },
+    {
+      "title": "Chiusi nelle ultime 2 settimane",
+      "pill": { "text": "1", "style": "ok" },
+      "columns": ["ID", "Area", "Titolo / descrizione", "Chiuso il"],
+      "rows": [
+        {
+          "id": "110",
+          "cells": ["PF"],
+          "title": "Etichetta ristampata senza dati di lotto",
+          "desc": "Risolto: il template ora legge il lotto dalla riga selezionata.",
+          "tail": ["29/07/2026"]
+        }
+      ]
+    }
+  ],
+
+  "footer": "Report generato automaticamente dai ticket del progetto. Per segnalazioni o correzioni rispondere alla mail di condivisione."
+}
