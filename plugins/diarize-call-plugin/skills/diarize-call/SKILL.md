@@ -72,7 +72,7 @@ bash ~/.claude/skills/diarize-call/scripts/diarize.sh "<file>" \
 
 Notes:
 - `--out` with `.md` extension; the raw JSON is written alongside as `<base>-raw.json`.
-- `--context` and `--keyterms` are combined into a single `prompt` field (universal3) — they work fine together.
+- `--context` and `--keyterms` are combined into a single `prompt` field (universal3+) — they work fine together.
 - If the user also wants the provider's built-in summary, add `--summary`, but the real summary you write yourself in step 4 will be richer.
 - The script checks for `curl`, `jq`, `ffmpeg`, `ffprobe` at startup and exits with install instructions if any are missing.
 

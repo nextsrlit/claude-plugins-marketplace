@@ -186,7 +186,7 @@ if [ "$provider" = "assemblyai" ]; then
     '{
       audio_url: $url,
       speaker_labels: true,
-      speech_models: ["universal-3-pro", "universal-2"]
+      speech_models: ["universal-3-5-pro", "universal-2"]
     }')
 
   if [ -n "$lang" ]; then
@@ -204,7 +204,7 @@ if [ "$provider" = "assemblyai" ]; then
     body=$(echo "$body" | jq --argjson opts "$sp_opts" '. + {speaker_options: $opts}')
   fi
 
-  # Context + keyterms → combined prompt on universal3
+  # Context + keyterms → combined prompt on universal3+
   prompt=""
   if [ -n "$context" ] && [ -n "$keyterms" ]; then
     prompt="$context, key terms: $keyterms"
@@ -225,7 +225,7 @@ if [ "$provider" = "assemblyai" ]; then
     body=$(echo "$body" | jq '. + {summarization: true, summary_type: "bullets", summary_model: "conversational"}')
   fi
 
-  echo "🎙️  Transcribing (AssemblyAI universal-3-pro)..."
+  echo "🎙️  Transcribing (AssemblyAI universal-3-5-pro)..."
   response=$(curl -s -X POST https://api.assemblyai.com/v2/transcript \
     -H "Authorization: $ASSEMBLYAI_API_KEY" \
     -H "Content-Type: application/json" \

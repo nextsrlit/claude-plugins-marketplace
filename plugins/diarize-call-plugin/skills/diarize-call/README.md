@@ -156,7 +156,7 @@ recording/
 
 | Provider | Model | Polling | Speaker hint | Context hint |
 |----------|-------|---------|--------------|--------------|
-| `assemblyai` | Universal-3 Pro | yes (5 s) | ✅ | ✅ |
+| `assemblyai` | Universal-3.5 Pro | yes (5 s) | ✅ | ✅ |
 | `gladia` | Solaria | yes (3 s) | ✅ | — |
 | `deepgram` | Nova-3 | no (sync) | — (auto) | — |
 
