@@ -20,8 +20,12 @@ vocabulary (priorities, statuses, known tags, people, report target) lives in
 ```
 
 Each ticket is YAML frontmatter (`id`, `title`, `tags`, `priority`, `requester`, `assignee`,
-`created`, `closed`, `status`, `related`) followed by free markdown — analysis, SQL, tables,
-timelines, checklists. The ticket file is the record; the conversation is not.
+`created`, `due`, `closed`, `status`, `related`) followed by free markdown — analysis, SQL,
+tables, timelines, checklists. The ticket file is the record; the conversation is not.
+
+`due` is the target resolution date (ISO or `N/A`) — an open ticket past it is **overdue**.
+It is the only optional field: drop it from `fields` in `_config.json` to stop tracking due
+dates, and old tickets without it only warn (`validate --fix` backfills `due: N/A`).
 
 ## The `tk` CLI
 
@@ -32,11 +36,14 @@ TK="$SK/scripts/tk.js"
 node $TK list                       # open, sorted priority → date desc
 node $TK list --tag mp,post --json
 node $TK list --done --since 2026-07-17
+node $TK list --overdue                       # open, past due
+node $TK list --due-in 7 --sort due           # due within a week, nearest first
 node $TK show 163
 node $TK tags                       # tag census with counts
 
 node $TK new --title "..." --tags mp,post --requester "Jane Doe" --priority high
 node $TK set 163 priority=medium status=waiting
+node $TK due 163 2026-08-14         # target date; `-` clears it, no arg shows it
 node $TK tag 163 kanban             # --remove to drop
 node $TK link 163 157               # bidirectional
 node $TK close 163                  # stamps date, moves to done/
@@ -53,8 +60,8 @@ node $TK report-data                # JSON input for the report
 
 Two steps on purpose — the numbers are computed, the prose is written:
 
-1. `node $TK report-data > data.json` — counts, sorted open list, tickets closed in the window,
-   plus each ticket's raw body.
+1. `node $TK report-data > data.json` — counts (`overdue`, `due_next_7d` included), sorted open
+   list, tickets closed in the window, plus each ticket's raw body, `due` and `overdue` flag.
 2. Build a render-input JSON (shape in `references/report-input.example.json`) with one
    client-facing paragraph per ticket, then:
 

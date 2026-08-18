@@ -8,6 +8,12 @@
   "idPad": 3,
   "bodySection": "Description",
 
+  "_fields_comment": "Frontmatter schema and its order. Only listed fields are allowed. \"due\" (target resolution date) is optional — remove it to stop tracking due dates.",
+  "fields": [
+    "id", "title", "tags", "priority", "requester", "assignee",
+    "created", "due", "closed", "status", "related"
+  ],
+
   "priorities": ["high", "medium", "low"],
   "statuses": ["open", "in-progress", "waiting", "closed"],
 

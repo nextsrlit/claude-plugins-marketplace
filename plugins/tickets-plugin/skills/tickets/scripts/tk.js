@@ -26,6 +26,16 @@ const path = require('path');
 
 const NA = 'N/A';
 
+/**
+ * Fields a ticket may legally omit. Everything else in `fields` is required, so a
+ * project that drops `due` from its `fields` list simply stops tracking due dates,
+ * and one that keeps it is not punished for tickets written before it existed.
+ */
+const OPTIONAL_FIELDS = new Set(['due']);
+
+/** Frontmatter keys holding an ISO date or N/A. */
+const DATE_FIELDS = new Set(['created', 'due', 'closed']);
+
 const DEFAULT_CONFIG = {
   name: 'Tickets',
   title: 'Ticket status',
@@ -35,7 +45,7 @@ const DEFAULT_CONFIG = {
   statuses: ['open', 'in-progress', 'waiting', 'closed'],
   fields: [
     'id', 'title', 'tags', 'priority', 'requester', 'assignee',
-    'created', 'closed', 'status', 'related',
+    'created', 'due', 'closed', 'status', 'related',
   ],
   // Optional: declare known tags to catch typos. Empty = anything goes.
   knownTags: [],
@@ -204,6 +214,24 @@ function isInternal(cfg, who) {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+function isDate(v) { return ISO_DATE.test(String(v || '')); }
+
+/** A field is tracked only if the project's `fields` list carries it. */
+function tracks(cfg, field) { return cfg.fields.includes(field); }
+
+/** Open ticket whose due date is in the past. Closed tickets are never overdue. */
+function isOverdue(t, ref) {
+  return !t.done && isDate(t.fm.due) && t.fm.due < (ref || today());
+}
+
+/** Open ticket due within the next `days` days (today included), not yet overdue. */
+function isDueSoon(t, days, ref) {
+  if (t.done || !isDate(t.fm.due)) return false;
+  const from = ref || today();
+  const to = new Date(Date.parse(from + 'T00:00:00Z') + days * 864e5).toISOString().slice(0, 10);
+  return t.fm.due >= from && t.fm.due <= to;
+}
+
 /** "N/A" must never compare greater than a real date — gate on the format first. */
 function closedSince(t, since) {
   return ISO_DATE.test(t.fm.closed) && t.fm.closed >= since;
@@ -224,6 +252,16 @@ function sortOpen(cfg, tickets) {
     if (va && vb && da !== db) return db.localeCompare(da);
     if (va !== vb) return va ? -1 : 1;
     return b.id - a.id;
+  });
+}
+
+/** by due date ascending; undated tickets last, then priority, then id desc */
+function sortDue(cfg, tickets) {
+  return tickets.slice().sort((a, b) => {
+    const va = isDate(a.fm.due), vb = isDate(b.fm.due);
+    if (va !== vb) return va ? -1 : 1;
+    if (va && a.fm.due !== b.fm.due) return a.fm.due.localeCompare(b.fm.due);
+    return prioRank(cfg, a.fm.priority) - prioRank(cfg, b.fm.priority) || b.id - a.id;
   });
 }
 
@@ -291,14 +329,20 @@ cmds.list = (cfg, all, { flags }) => {
   if (flags.priority) ts = ts.filter(t => t.fm.priority === flags.priority);
   if (flags.status) ts = ts.filter(t => t.fm.status === flags.status);
   if (flags.since) ts = ts.filter(t => closedSince(t, flags.since));
+  if (flags.overdue) ts = ts.filter(t => isOverdue(t));
+  if (flags['due-before']) ts = ts.filter(t => isDate(t.fm.due) && t.fm.due < flags['due-before']);
+  if (flags['due-in']) ts = ts.filter(t => isDueSoon(t, parseInt(flags['due-in'], 10) || 0));
+  if (flags['no-due']) ts = ts.filter(t => !isDate(t.fm.due));
   if (flags.grep) {
     const re = new RegExp(flags.grep, 'i');
     ts = ts.filter(t => re.test(t.fm.title) || re.test(t.body));
   }
 
-  ts = scope === 'done'
-    ? ts.sort((a, b) => String(b.fm.closed).localeCompare(String(a.fm.closed)) || b.id - a.id)
-    : sortOpen(cfg, ts);
+  ts = flags.sort === 'due'
+    ? sortDue(cfg, ts)
+    : scope === 'done'
+      ? ts.sort((a, b) => String(b.fm.closed).localeCompare(String(a.fm.closed)) || b.id - a.id)
+      : sortOpen(cfg, ts);
 
   if (flags.json) {
     console.log(JSON.stringify(ts.map(t => Object.assign({}, t.fm, {
@@ -306,9 +350,13 @@ cmds.list = (cfg, all, { flags }) => {
     })), null, 2));
     return;
   }
+  const showDue = tracks(cfg, 'due') && ts.some(t => isDate(t.fm.due));
   for (const t of ts) {
     const st = t.fm.status !== cfg.OPEN && t.fm.status !== cfg.CLOSED ? ` [${t.fm.status}]` : '';
-    console.log(`${String(t.id).padStart(4)}  ${String(t.fm.priority).padEnd(7)} ${t.fm.tags.join(',').padEnd(14)} ${String(t.fm.created).padEnd(11)} ${t.fm.title}${st}`);
+    const due = showDue
+      ? `${String(isDate(t.fm.due) ? t.fm.due : '').padEnd(10)}${isOverdue(t) ? '!' : ' '} `
+      : '';
+    console.log(`${String(t.id).padStart(4)}  ${String(t.fm.priority).padEnd(7)} ${t.fm.tags.join(',').padEnd(14)} ${String(t.fm.created).padEnd(11)} ${due}${t.fm.title}${st}`);
   }
   if (!flags.quiet) console.error(`— ${ts.length} ticket${ts.length === 1 ? '' : 's'}`);
 };
@@ -360,6 +408,11 @@ cmds.new = (cfg, all, { pos, flags }) => {
     status: flags.status || cfg.OPEN,
     related,
   };
+  if (tracks(cfg, 'due')) fm.due = flags.due || NA;
+  for (const f of DATE_FIELDS)
+    if (f in fm && fm[f] !== NA && !isDate(fm[f])) die(`bad ${f} date "${fm[f]}" — use YYYY-MM-DD or ${NA}`);
+  if (isDate(fm.due) && isDate(fm.created) && fm.due < fm.created)
+    die(`due ${fm.due} is before created ${fm.created}`);
   if (!cfg.priorities.includes(fm.priority)) die(`unknown priority "${fm.priority}" — known: ${cfg.priorities.join(', ')}`);
   if (!cfg.statuses.includes(fm.status)) die(`unknown status "${fm.status}" — known: ${cfg.statuses.join(', ')}`);
 
@@ -405,6 +458,21 @@ cmds.tag = (cfg, all, { pos, flags }) => {
     : cur.concat(want.filter(g => !cur.includes(g)));
   writeTicket(t, cfg);
   console.log(`${t.id} tags: [${t.fm.tags.join(', ')}]`);
+};
+
+/** `tk due <id> <date|->` — the one field worth its own verb; the rest go through `set`. */
+cmds.due = (cfg, all, { pos }) => {
+  if (!pos[0]) die('usage: tk due <id> [YYYY-MM-DD|-]   (no date = show it)');
+  const t = byId(all, pos[0]);
+  if (!t) die('not found: ' + pos[0]);
+  if (!tracks(cfg, 'due')) die('this project does not track due dates (add "due" to fields in _config.json)');
+  if (pos[1] === undefined) return void console.log(`${t.id} due ${isDate(t.fm.due) ? t.fm.due : NA}`);
+  const d = pos[1] === '-' ? NA : pos[1];
+  if (d !== NA && !isDate(d)) die(`bad due date "${pos[1]}" — use YYYY-MM-DD or - to clear`);
+  if (d !== NA && isDate(t.fm.created) && d < t.fm.created) die(`due ${d} is before created ${t.fm.created}`);
+  t.fm.due = d;
+  writeTicket(t, cfg);
+  console.log(`${t.id} due ${d}${isOverdue(t) ? ' (overdue)' : ''}`);
 };
 
 cmds.close = (cfg, all, { pos, flags }) => {
@@ -453,8 +521,15 @@ cmds.set = (cfg, all, { pos, flags }) => {
     if (k === 'tags') t.fm.tags = parseTags(v);
     else if (k === 'related') t.fm.related = parseIds(v);
     else if (k === 'requester' || k === 'assignee') t.fm[k] = canonPerson(cfg, v);
+    else if (DATE_FIELDS.has(k)) {
+      const d = v === '' || v === '-' ? NA : v;
+      if (d !== NA && !isDate(d)) die(`bad ${k} date "${v}" — use YYYY-MM-DD, ${NA} or - to clear`);
+      t.fm[k] = d;
+    }
     else t.fm[k] = v;
   }
+  if (isDate(t.fm.due) && isDate(t.fm.created) && t.fm.due < t.fm.created)
+    die(`due ${t.fm.due} is before created ${t.fm.created}`);
   writeTicket(t, cfg);
   if (flags.rename) renameToTitle(cfg, t);
   console.log(`${t.id} updated`);
@@ -477,8 +552,19 @@ cmds.validate = (cfg, all, { flags }) => {
     const warn = m => warns.push([rel, m]);
     if (!t.fm) { err('not a ticket: no frontmatter, or frontmatter without an id'); continue; }
 
-    for (const f of cfg.fields) if (!(f in t.fm)) err(`missing field: ${f}`);
-    for (const k of Object.keys(t.fm)) if (!cfg.fields.includes(k)) err(`unknown field: ${k}`);
+    for (const f of cfg.fields) {
+      if (f in t.fm) continue;
+      if (OPTIONAL_FIELDS.has(f)) {
+        warn(`missing optional field: ${f}${fix ? ' [fixed]' : ''}`);
+        if (fix) { t.fm[f] = NA; writeTicket(t, cfg); }
+      } else err(`missing field: ${f}`);
+    }
+    for (const k of Object.keys(t.fm)) {
+      if (cfg.fields.includes(k)) continue;
+      // An optional field the project no longer tracks is dead weight, not corruption.
+      if (OPTIONAL_FIELDS.has(k)) warn(`field not tracked by this project: ${k}`);
+      else err(`unknown field: ${k}`);
+    }
 
     if (seen.has(t.id)) err(`duplicate id ${t.id} (also ${path.relative(cfg.root, seen.get(t.id))})`);
     else seen.set(t.id, t.file);
@@ -509,7 +595,12 @@ cmds.validate = (cfg, all, { flags }) => {
       err(`bad created date: ${t.fm.created}`);
     if (ISO_DATE.test(t.fm.created) && ISO_DATE.test(t.fm.closed) && t.fm.closed < t.fm.created)
       err('closed before created');
+    if ('due' in t.fm && !isDate(t.fm.due) && t.fm.due !== NA)
+      err(`bad due date: ${t.fm.due}`);
+    if (isDate(t.fm.due) && isDate(t.fm.created) && t.fm.due < t.fm.created)
+      err('due before created');
 
+    if (isOverdue(t)) warn(`overdue: due ${t.fm.due}`);
     if (t.fm.status === cfg.CLOSED && t.fm.closed === NA) warn('closed without a closing date');
     if (t.fm.created === NA) warn('no created date');
 
@@ -546,6 +637,9 @@ cmds.stats = (cfg, all, { flags }) => {
     by_priority: {},
     by_status: {},
     by_tag: {},
+    overdue: open.filter(t => isOverdue(t)).length,
+    due_next_7d: open.filter(t => isDueSoon(t, 7)).length,
+    no_due: tracks(cfg, 'due') ? open.filter(t => !isDate(t.fm.due)).length : undefined,
     closed_in_window: done.filter(t => closedSince(t, since)).length,
     closed_total: done.length,
     window_from: since,
@@ -572,6 +666,8 @@ cmds['report-data'] = (cfg, all, { flags }) => {
     status: t.fm.status,
     requester: isInternal(cfg, t.fm.requester) ? cfg.people.internalLabel : t.fm.requester,
     created: t.fm.created,
+    due: isDate(t.fm.due) ? t.fm.due : NA,
+    overdue: isOverdue(t),
     closed: t.fm.closed,
     file: path.relative(cfg.root, t.file),
     body: t.body.trim(),
@@ -587,6 +683,8 @@ cmds['report-data'] = (cfg, all, { flags }) => {
     counts: {
       open: open.length,
       top_priority: open.filter(t => t.fm.priority === TOP).length,
+      overdue: open.filter(t => isOverdue(t)).length,
+      due_next_7d: open.filter(t => isDueSoon(t, 7)).length,
       by_status: open.reduce((a, t) => (a[t.fm.status] = (a[t.fm.status] || 0) + 1, a), {}),
       closed_in_window: recent.length,
       closed_total: pool.filter(t => t.done).length,
@@ -602,13 +700,16 @@ cmds.help = () => {
 
   tk list [--open|--done|--all] [--tag a,b] [--any-tag a,b] [--no-tag a]
           [--priority P] [--status S] [--since YYYY-MM-DD] [--grep RE] [--json] [--body]
+          [--overdue] [--due-in N] [--due-before YYYY-MM-DD] [--no-due] [--sort due]
   tk show <id>
   tk tags [--all] [--json]                 # tag census with counts
   tk next-id
   tk new --title "..." [--tags a,b] [--priority P] [--requester N] [--assignee N]
-         [--date YYYY-MM-DD] [--status S] [--related 1,2] [--id N] [--body "..."]
+         [--date YYYY-MM-DD] [--due YYYY-MM-DD] [--status S] [--related 1,2] [--id N]
+         [--body "..."]
   tk tag <id> <tag>[,<tag>] [--remove]
   tk set <id> field=value ... [--rename]   # --rename syncs the filename to the title
+  tk due <id> [YYYY-MM-DD|-]               # target resolution date; - clears it, no arg shows it
   tk close <id>... [--date YYYY-MM-DD]     # stamps the date, moves to done/
   tk reopen <id>... [--status S]
   tk link <id-a> <id-b>                    # bidirectional
@@ -616,7 +717,8 @@ cmds.help = () => {
   tk stats [--window N]
   tk report-data [--window N] [--tag a,b]  # JSON bundle for the HTML report
 
-Fields: id, title, tags, priority, requester, assignee, created, closed, status, related.
+Fields: id, title, tags, priority, requester, assignee, created, due, closed, status,
+related. "due" is optional — drop it from "fields" in _config.json to stop tracking it.
 Config: <tickets>/_config.json — see references/config.example.json.
 Root auto-detected upward from --root or cwd.
 `);
