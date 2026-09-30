@@ -1,0 +1,49 @@
+{
+  "lang": "en",
+  "period": "day",
+  "periodLabel": "Tuesday 29 September 2026",
+  "generatedLabel": "30 September 2026, 08:06",
+  "repos": [
+    {
+      "name": "frontend",
+      "label": "acme/frontend",
+      "url": "https://github.com/acme/frontend",
+      "commitUrl": "https://github.com/acme/frontend/commit/{hash}",
+      "prefixConvention": true,
+      "review": { "mode": "guidelines", "files": ["CLAUDE.md", "doc/PATTERNS.md"] }
+    },
+    {
+      "name": "backend",
+      "url": "https://gitlab.com/acme/backend",
+      "commitUrl": "https://gitlab.com/acme/backend/-/commit/{hash}",
+      "review": { "mode": "generic", "stack": "Node.js + Express" }
+    }
+  ],
+  "people": [
+    { "id": "AS", "name": "Alice Smith", "short": "A. Smith" },
+    { "id": "BR", "name": "Bob Rossi", "short": "B. Rossi" }
+  ],
+  "summary": [
+    "Main thread: the **checkout** rewrite (A. Smith), well tested and split into small commits.",
+    "One risky change in `payments.js` (B. Rossi): see *Needs attention* before the next deploy."
+  ],
+  "commits": [
+    {
+      "h": "3f8d5bcc08e537fa222a04910fd3a9a361f81a40",
+      "r": "frontend", "a": "AS", "b": "feature/checkout",
+      "m": "Checkout, Cart, Extract price formatting into a shared helper",
+      "area": "Checkout",
+      "s": "Clean extraction with unit tests",
+      "add": 120, "del": 64, "q": "ok",
+      "notes": ["Reuses the existing `formatMoney` instead of adding a second helper.", "Tests cover rounding edge cases."]
+    },
+    {
+      "h": "e24337d885e494b1f7dc397c2baf752b5bf2c482",
+      "r": "backend", "a": "BR", "b": "main",
+      "m": "Update payment retry logic",
+      "s": "Retries a non-idempotent charge without a key",
+      "add": 23, "del": 22, "q": "bad",
+      "notes": ["`chargeCard()` is retried without an idempotency key: a timeout can double-charge.", "No test for the retry path."]
+    }
+  ]
+}

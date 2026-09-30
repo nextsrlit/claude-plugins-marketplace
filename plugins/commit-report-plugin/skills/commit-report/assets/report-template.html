@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="__REPORT_LANG__">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__REPORT_TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f3f4f7; --surface: #ffffff; --surface-alt: #fafbfc; --hover: #f7f8fb;
+  --border: #e2e5ee; --row: #eef0f5; --control: #d9dde8; --track: #eef0f5;
+  --text: #171a26; --text2: #343a50; --muted: #5a6178; --muted2: #6b7289; --faint: #8a91a8;
+  --accent: #2459c4; --accent-hover: #173f94; --selected: #eef3fd;
+  --add: #16a06a; --add-t: #127a52; --del: #d64545; --del-t: #b02e2e;
+  --code-bg: #e9ecf3; --avatar-bg: #e6eaf5; --avatar-fg: #2d3552;
+  --q-ok: #0c7a53;  --q-ok-dot: #16a06a;  --q-ok-bg: #e2f4eb;
+  --q-warn: #7d5b00; --q-warn-dot: #e0a810; --q-warn-bg: #fbf1d4;
+  --q-impr: #a3440b; --q-impr-dot: #ec7324; --q-impr-bg: #fde7d6;
+  --q-bad: #a82020;  --q-bad-dot: #dc3535;  --q-bad-bg: #fbe2e2;
+  --q-none: #5a6178; --q-none-dot: #b8bdcc; --q-none-bg: #eef0f5;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  /* Header is ALWAYS dark: fixed hex values, never redefined by the theme overrides below. */
+  --header-bg: #141828; --header-line: #2a2f45; --header-hover: #1c2136;
+  --header-text: #ffffff; --header-muted: #9aa3bf; --header-legend: #c3c8da;
+  --header-add: #5fd49c; --header-del: #ff8a8a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1220; --surface: #181c2c; --surface-alt: #1c2133; --hover: #1f2436;
+    --border: #2a2f45; --row: #232839; --control: #353b54; --track: #262b3f;
+    --text: #e8eaf2; --text2: #c3c8da; --muted: #9aa3bf; --muted2: #8a91a8; --faint: #6b7289;
+    --accent: #7aa2ff; --accent-hover: #a8c1ff; --selected: #1d2744;
+    --add: #2fbf82; --add-t: #5fd49c; --del: #e05a5a; --del-t: #ff8a8a;
+    --code-bg: #262b3f; --avatar-bg: #2a3150; --avatar-fg: #d6dcf0;
+    --q-ok: #5fd49c;  --q-ok-bg: #12352a;
+    --q-warn: #f2c94c; --q-warn-bg: #3a3010;
+    --q-impr: #ffa666; --q-impr-bg: #3d2413;
+    --q-bad: #ff8a8a;  --q-bad-bg: #3d1a1d;
+    --q-none: #9aa3bf; --q-none-dot: #5a6178; --q-none-bg: #232839;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1220; --surface: #181c2c; --surface-alt: #1c2133; --hover: #1f2436;
+  --border: #2a2f45; --row: #232839; --control: #353b54; --track: #262b3f;
+  --text: #e8eaf2; --text2: #c3c8da; --muted: #9aa3bf; --muted2: #8a91a8; --faint: #6b7289;
+  --accent: #7aa2ff; --accent-hover: #a8c1ff; --selected: #1d2744;
+  --add: #2fbf82; --add-t: #5fd49c; --del: #e05a5a; --del-t: #ff8a8a;
+  --code-bg: #262b3f; --avatar-bg: #2a3150; --avatar-fg: #d6dcf0;
+  --q-ok: #5fd49c;  --q-ok-bg: #12352a;
+  --q-warn: #f2c94c; --q-warn-bg: #3a3010;
+  --q-impr: #ffa666; --q-impr-bg: #3d2413;
+  --q-bad: #ff8a8a;  --q-bad-bg: #3d1a1d;
+  --q-none: #9aa3bf; --q-none-dot: #5a6178; --q-none-bg: #232839;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+button, input, select { font: inherit; }
+.mono { font-family: var(--mono); }
+.num { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+/* Header */
+.page-header { background: var(--header-bg); color: var(--header-text); }
+.page-header .wrap { padding-top: 36px; padding-bottom: 30px; display: flex; flex-direction: column; gap: 28px; }
+.kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--header-muted); }
+.page-header h1 { margin: 0; font-size: 40px; line-height: 1.05; font-weight: 700; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.page-header h1 a { color: var(--header-text); }
+.page-header .meta { font-size: 13px; color: var(--header-muted); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--header-line); border: 1px solid var(--header-line); border-radius: 10px; overflow: hidden; }
+.kpi { background: var(--header-bg); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.kpi.clickable { cursor: pointer; }
+.kpi.clickable:hover { background: var(--header-hover); }
+.kpi-label { font-size: 12px; color: var(--header-muted); }
+.kpi-value { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 10px; }
+.kpi-value .add { color: var(--header-add); }
+.kpi-value .del { color: var(--header-del); font-size: 18px; }
+.kpi-value .bad { color: var(--header-del); }
+.kpi-value small { font-size: 12px; font-weight: 400; color: var(--header-muted); }
+.qbar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--header-line); }
+.qlegend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12.5px; color: var(--header-legend); }
+.qlegend span { display: flex; align-items: center; gap: 7px; }
+.qlegend .dot { width: 9px; height: 9px; }
+.qlegend b { color: var(--header-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Layout */
+main.wrap { padding-top: 28px; padding-bottom: 48px; display: flex; flex-direction: column; gap: 36px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.intro { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 16px; }
+.intro .card { padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+.intro h2 { font-size: 15px; }
+.summary { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.55; color: var(--text2); }
+.summary li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; }
+.summary .idx { font-family: var(--mono); font-size: 12px; color: var(--faint); padding-top: 2px; }
+.pretty { text-wrap: pretty; }
+.attn { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; cursor: pointer; }
+.attn:hover { filter: brightness(.97); }
+.attn .dot { margin-top: 5px; }
+.attn-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 12px; }
+.attn-head .mono { font-weight: 600; color: var(--text); }
+.attn-msg { font-size: 13.5px; color: var(--text); margin-top: 3px; }
+.linkbtn { align-self: flex-start; border: none; background: none; padding: 0; font-size: 13px; color: var(--accent); cursor: pointer; text-align: left; }
+.linkbtn:hover { text-decoration: underline; }
+.empty-note { font-size: 13.5px; color: var(--muted); }
+.section { display: flex; flex-direction: column; gap: 12px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.hint { font-size: 12.5px; color: var(--muted); }
+
+/* Contributors */
+.people { overflow: hidden; }
+.prow { display: grid; grid-template-columns: minmax(150px, 1.3fr) minmax(90px, .8fr) minmax(170px, 1.4fr) minmax(170px, 1.4fr); gap: 20px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--row); cursor: pointer; }
+.prow:last-child { border-bottom: none; }
+.prow:hover { background: var(--hover); }
+.prow.sel { background: var(--selected); }
+.prow.head { padding: 10px 20px; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted2); background: var(--surface-alt); border-bottom: 1px solid var(--border); cursor: default; }
+.prow.head:hover { background: var(--surface-alt); }
+.person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--avatar-bg); color: var(--avatar-fg); display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 600; flex-shrink: 0; }
+.pname { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track { flex: 1; height: 6px; background: var(--track); border-radius: 3px; overflow: hidden; }
+.track > div { height: 100%; border-radius: 3px; }
+.pcount { display: flex; align-items: center; gap: 10px; }
+.pcount b { font-size: 15px; font-weight: 600; min-width: 22px; }
+.plines { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.plines > div { display: flex; align-items: center; gap: 8px; }
+.plines .track { height: 5px; }
+.plines span { width: 52px; text-align: right; font-weight: 500; }
+.t-add { color: var(--add-t); } .t-del { color: var(--del-t); }
+.pq { display: flex; flex-direction: column; gap: 6px; }
+.pq .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--track); }
+.pq .legend { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11.5px; color: var(--muted); }
+.pq .legend span { display: flex; align-items: center; gap: 4px; }
+.pq .legend .dot { width: 7px; height: 7px; }
+
+/* Commits */
+.review-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 11.5px; background: var(--code-bg); padding: 2px 7px; border-radius: 4px; color: var(--text2); }
+.toolbar-sticky { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0; }
+.toolbar { padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toolbar input { flex: 1 1 220px; min-width: 0; height: 34px; border: 1px solid var(--control); border-radius: 7px; padding: 0 12px; font-size: 13.5px; color: var(--text); background: var(--surface-alt); outline: none; }
+.toolbar input:focus { border-color: var(--accent); background: var(--surface); }
+.toolbar select, .toolbar .btn { height: 34px; border: 1px solid var(--control); border-radius: 7px; padding: 0 10px; font-size: 13px; background: var(--surface); color: var(--text2); cursor: pointer; white-space: nowrap; }
+.toolbar .btn:hover { background: var(--hover); }
+.chips { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid var(--row); }
+.chip-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chip-group > span { width: 84px; flex-shrink: 0; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted2); }
+.chip { height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--control); background: var(--surface); color: var(--text2); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.chip.on { background: var(--text); color: var(--surface); border-color: var(--text); }
+.chip.dim { opacity: .45; }
+.chip .dot { width: 8px; height: 8px; }
+.chip .av { width: 20px; height: 20px; margin-left: -5px; border-radius: 50%; background: var(--avatar-bg); color: var(--avatar-fg); display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 600; }
+.chip.on .av { background: var(--muted); color: var(--surface); }
+.chip .n { font-variant-numeric: tabular-nums; opacity: .65; }
+.list-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
+.commits { overflow: hidden; }
+.commit { border-bottom: 1px solid var(--row); }
+.commit:last-child { border-bottom: none; }
+.crow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 20px; cursor: pointer; }
+.crow:hover { background: var(--hover); }
+.cmain { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.cmsg { font-size: 14px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+.cmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; color: var(--muted); }
+.cmeta .hash { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+.cmeta .ref { font-family: var(--mono); font-size: 11.5px; color: var(--muted2); }
+.area { padding: 1px 7px; border-radius: 4px; background: var(--row); color: var(--text2); font-weight: 500; }
+.area.missing { background: var(--q-impr-bg); color: var(--q-impr); }
+.cstats { display: flex; align-items: center; gap: 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.cstats .size { width: 72px; height: 6px; display: flex; border-radius: 3px; overflow: hidden; background: var(--track); }
+.cstats span { text-align: right; font-weight: 500; }
+.badge { width: 104px; text-align: center; padding: 3px 0; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.chev { width: 14px; color: var(--faint); font-size: 12px; transition: transform .15s; }
+.commit.open .chev { transform: rotate(90deg); }
+.cdetail { display: none; padding: 2px 20px 20px 46px; flex-direction: column; gap: 10px; }
+.commit.open .cdetail { display: flex; }
+.cdetail .verdict { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.notes { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; max-width: 820px; }
+.notes li { display: grid; grid-template-columns: 14px 1fr; gap: 6px; font-size: 13.5px; line-height: 1.55; color: var(--text2); }
+.notes li::before { content: '–'; color: var(--faint); }
+code { font-family: var(--mono); font-size: 12.5px; background: var(--row); padding: 1px 5px; border-radius: 4px; color: var(--avatar-fg); }
+.cdetail .open-link { font-size: 12.5px; align-self: flex-start; }
+.empty { padding: 40px 20px; text-align: center; font-size: 14px; color: var(--muted); }
+footer { text-align: center; font-size: 12px; color: var(--faint); }
+[hidden] { display: none !important; }
+
+@media (max-width: 720px) {
+  .wrap { padding-left: 16px; padding-right: 16px; }
+  .page-header h1 { font-size: 30px; }
+  .prow { grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 14px 16px; }
+  .prow .person { grid-column: 1 / -1; }
+  .prow.head { display: none; }
+  .crow { padding: 14px 16px; }
+  .cdetail { padding: 2px 16px 18px 16px; }
+  .chip-group > span { width: 100%; }
+  .toolbar-sticky { position: static; }
+}
+</style>
+</head>
+<body>
+<script type="application/json" id="report-data">/*__REPORT_DATA__*/null</script>
+
+<header class="page-header">
+  <div class="wrap">
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="kicker" id="kicker"></div>
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div id="qdist" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <div class="card" id="summary-card"></div>
+    <div class="card" id="attention-card"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2 id="people-title"></h2>
+      <span class="hint" id="people-hint"></span>
+    </div>
+    <div class="card people" id="people"></div>
+  </section>
+
+  <section class="section" id="commits-section">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <h2 id="commits-title"></h2>
+      <div id="review-lines" style="display:flex;flex-direction:column;gap:4px;"></div>
+    </div>
+    <div class="toolbar-sticky">
+      <div class="card toolbar">
+        <input id="query" type="search">
+        <select id="sort"></select>
+        <button class="btn" id="toggle-all" type="button"></button>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+    <div class="list-meta">
+      <span id="count"></span>
+      <button class="linkbtn" id="reset" type="button" hidden></button>
+    </div>
+    <div class="card commits" id="commits"></div>
+  </section>
+
+  <footer id="footer"></footer>
+</main>
+
+<script>
+(() => {
+  const I18N = {
+    it: {
+      kicker: 'Commit report', repo1: 'repository', repoN: 'repository', bots: 'bot esclusi', generated: 'generato il',
+      kCommits: 'Commit', kPeople: 'Contributor', kLines: 'Righe aggiunte / rimosse', kOk: 'Commit eccellenti', kBad: 'Flag critici', see: 'vedi →',
+      summaryDay: 'Sintesi della giornata', summaryRange: 'Sintesi del periodo', attention: 'Da verificare', noAttention: 'Nessun commit Migliorabile o Problematico.',
+      warnLink: n => `+ ${n} commit “Buono” con osservazioni minori →`,
+      people: 'Contributor', peopleHint: 'Clicca una riga per filtrare i commit', colPerson: 'Persona', colCommits: 'Commit', colLines: 'Righe + / −', colQuality: 'Qualità',
+      commits: 'Commit e code review', reviewAgainst: 'Review rispetto a', reviewGeneric: 'Review generica sulle best practice dello stack (nessuna linea guida nel repo)', reviewOff: 'Review qualità disattivata',
+      search: 'Cerca messaggio, hash, branch…', sortChrono: 'Ordine cronologico', sortCrit: 'Prima i critici', sortSize: 'Più grandi prima',
+      expandAll: 'Espandi tutto', collapseAll: 'Comprimi tutto', all: 'Tutti', gQuality: 'Qualità', gPeople: 'Contributor', gRepo: 'Repo',
+      count: (n, t) => n === t ? `${t} commit` : `${n} di ${t} commit`, reset: 'Azzera filtri', empty: 'Nessun commit corrisponde ai filtri.',
+      noPrefix: 'senza prefisso', openOn: h => `Apri su ${h} ↗`, footer: 'Generato dalla skill commit-report', repoLabel: 'repo',
+      q: { ok: 'Eccellente', warn: 'Buono', impr: 'Migliorabile', bad: 'Problematico', none: 'Non revisionato' },
+    },
+    en: {
+      kicker: 'Commit report', repo1: 'repository', repoN: 'repositories', bots: 'bots excluded', generated: 'generated',
+      kCommits: 'Commits', kPeople: 'Contributors', kLines: 'Lines added / removed', kOk: 'Excellent commits', kBad: 'Critical flags', see: 'see →',
+      summaryDay: 'Day summary', summaryRange: 'Period summary', attention: 'Needs attention', noAttention: 'No Improvable or Problematic commits.',
+      warnLink: n => `+ ${n} “Good” commits with minor notes →`,
+      people: 'Contributors', peopleHint: 'Click a row to filter commits', colPerson: 'Person', colCommits: 'Commits', colLines: 'Lines + / −', colQuality: 'Quality',
+      commits: 'Commits & code review', reviewAgainst: 'Reviewed against', reviewGeneric: 'Generic best-practices review for the stack (no repo guidelines)', reviewOff: 'Quality review disabled',
+      search: 'Search message, hash, branch…', sortChrono: 'Chronological', sortCrit: 'Critical first', sortSize: 'Largest first',
+      expandAll: 'Expand all', collapseAll: 'Collapse all', all: 'All', gQuality: 'Quality', gPeople: 'Contributor', gRepo: 'Repo',
+      count: (n, t) => n === t ? `${t} commits` : `${n} of ${t} commits`, reset: 'Clear filters', empty: 'No commits match the filters.',
+      noPrefix: 'no prefix', openOn: h => `Open on ${h} ↗`, footer: 'Generated by the commit-report skill', repoLabel: 'repos',
+      q: { ok: 'Excellent', warn: 'Good', impr: 'Improvable', bad: 'Problematic', none: 'Not reviewed' },
+    },
+  };
+
+  const D = JSON.parse(document.getElementById('report-data').textContent);
+  const L = I18N[D.lang] || I18N.en;
+  const QK = ['ok', 'warn', 'impr', 'bad'];
+  const RANK = { bad: 0, impr: 1, warn: 2, ok: 3, none: 4 };
+  const qv = k => ({ label: L.q[k], fg: `var(--q-${k})`, dot: `var(--q-${k}-dot)`, bg: `var(--q-${k}-bg)` });
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Mini-markdown for summary and notes: `code` and **bold**, everything else escaped.
+  const md = s => String(s ?? '').split('`').map((t, i) => i % 2 ? `<code>${esc(t)}</code>` : esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')).join('');
+  // Manual grouping: it-IT toLocaleString leaves 4-digit numbers ungrouped (8398, not 8.398).
+  const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, D.lang === 'it' ? '.' : ',');
+  const pct = (n, d) => (d ? (n / d) * 100 : 0).toFixed(2) + '%';
+  const initials = name => { const w = name.split(/\s+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[w.length - 1][0] : (w[0] || '?').slice(0, 2)).toUpperCase(); };
+  const $ = id => document.getElementById(id);
+
+  const repos = Object.fromEntries(D.repos.map(r => [r.name, r]));
+  const P = Object.fromEntries(D.people.map(p => [p.id, { ...p, short: p.short || p.name, initials: p.initials || initials(p.name) }]));
+  const C = D.commits.map((c, i) => {
+    const repo = repos[c.r];
+    return { ...c, i, q: c.q || 'none', short: c.h.slice(0, 8),
+      url: repo.commitUrl ? repo.commitUrl.replace('{hash}', c.h) : null,
+      area: c.area || null, needsPrefix: !c.area && !!repo.prefixConvention };
+  });
+  const reviewed = C.filter(c => c.q !== 'none');
+  const hasReview = reviewed.length > 0;
+  const multiRepo = D.repos.length > 1;
+  const hostLabel = url => /github\./.test(url) ? 'GitHub' : /gitlab\./.test(url) ? 'GitLab' : 'web';
+  const dist = list => { const rv = list.filter(c => c.q !== 'none'); return QK.map(k => { const n = rv.filter(c => c.q === k).length; return { k, n, pct: pct(n, rv.length), ...qv(k) }; }); };
+  const people = D.people.map(p => {
+    const list = C.filter(c => c.a === p.id);
+    return { ...P[p.id], list, n: list.length, add: list.reduce((a, c) => a + c.add, 0), del: list.reduce((a, c) => a + c.del, 0) };
+  }).filter(p => p.n).sort((a, b) => b.n - a.n);
+
+  const S = { query: '', q: [], author: [], repo: [], sort: D.defaultSort || 'chrono', open: {}, allOpen: false };
+
+  // ---------- static parts ----------
+  document.title = D.title || document.title;
+  $('kicker').textContent = `${L.kicker} · ${D.periodLabel}`;
+  $('title').innerHTML = D.repos.map(r => r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label || r.name)}</a>` : esc(r.label || r.name)).join(' <span style="color:var(--header-muted)">+</span> ');
+  $('meta').textContent = `${D.repos.length} ${D.repos.length === 1 ? L.repo1 : L.repoN} · ${L.bots} · ${L.generated} ${D.generatedLabel}`;
+
+  const cnt = k => C.filter(c => c.q === k).length;
+  const kpi = (label, value, act) => `<div class="kpi${act ? ' clickable' : ''}"${act ? ` data-act="${act}"` : ''}><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div></div>`;
+  $('kpis').innerHTML = [
+    kpi(L.kCommits, C.length),
+    kpi(L.kPeople, people.length),
+    kpi(L.kLines, `<span class="add">+${fmt(C.reduce((a, c) => a + c.add, 0))}</span><span class="del">−${fmt(C.reduce((a, c) => a + c.del, 0))}</span>`),
+    hasReview ? kpi(L.kOk, Math.round(cnt('ok') / reviewed.length * 100) + '%') : '',
+    hasReview ? kpi(L.kBad, `<span class="${cnt('bad') ? 'bad' : ''}">${cnt('bad')}</span><small>${L.see}</small>`, 'filter-bad') : '',
+  ].join('');
+
+  if (hasReview) {
+    const d = dist(C);
+    $('qdist').innerHTML = `<div class="qbar">${d.filter(x => x.n).map(x => `<div title="${esc(x.label)}: ${x.n}" style="width:${x.pct};background:${x.dot}"></div>`).join('')}</div>
+      <div class="qlegend">${d.map(x => `<span><span class="dot" style="background:${x.dot}"></span>${esc(x.label)} <b>${x.n}</b></span>`).join('')}</div>`;
+  } else $('qdist').hidden = true;
+
+  $('summary-card').innerHTML = `<h2>${esc(D.summaryTitle || (D.period === 'range' ? L.summaryRange : L.summaryDay))}</h2>
+    <ol class="summary">${(D.summary || []).map((s, i) => `<li><span class="idx">${String(i + 1).padStart(2, '0')}</span><span class="pretty">${md(s)}</span></li>`).join('')}</ol>`;
+
+  if (hasReview) {
+    const attn = C.filter(c => c.q === 'bad' || c.q === 'impr').sort((a, b) => RANK[a.q] - RANK[b.q] || a.i - b.i);
+    const warnN = cnt('warn');
+    $('attention-card').innerHTML = `<h2>${L.attention}</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;">${attn.length ? attn.map(c => { const v = qv(c.q); return `
+        <div class="attn" data-act="jump" data-h="${esc(c.h)}" style="background:${v.bg}">
+          <span class="dot" style="background:${v.dot}"></span>
+          <div style="min-width:0">
+            <div class="attn-head"><span class="mono">${esc(c.short)}</span><span style="color:${v.fg};font-weight:600">${esc(v.label)}</span><span style="color:var(--muted)">${esc(P[c.a].short)}</span></div>
+            <div class="attn-msg pretty">${md(c.s || c.m)}</div>
+          </div>
+        </div>`; }).join('') : `<div class="empty-note">${L.noAttention}</div>`}</div>
+      ${warnN ? `<button class="linkbtn" type="button" data-act="filter-warn">${L.warnLink(warnN)}</button>` : ''}`;
+  } else {
+    $('attention-card').hidden = true;
+  }
+
+  $('people-title').textContent = L.people;
+  $('people-hint').textContent = L.peopleHint;
+  $('commits-title').textContent = L.commits;
+  $('review-lines').innerHTML = D.repos.map(r => {
+    const who = multiRepo ? `<b style="color:var(--text2)">${esc(r.name)}</b> · ` : '';
+    const rv = r.review || { mode: 'off' };
+    if (rv.mode === 'guidelines') return `<div class="review-line">${who}<span>${L.reviewAgainst}</span>${(rv.files || []).map(f => `<span class="tag">${esc(f)}</span>`).join('')}</div>`;
+    if (rv.mode === 'generic') return `<div class="review-line">${who}<span>🌐 ${L.reviewGeneric}${rv.stack ? ` · <span class="tag">${esc(rv.stack)}</span>` : ''}</span></div>`;
+    return `<div class="review-line">${who}<span>${L.reviewOff}</span></div>`;
+  }).join('');
+
+  $('query').placeholder = L.search;
+  $('sort').innerHTML = [['chrono', L.sortChrono], ...(hasReview ? [['crit', L.sortCrit]] : []), ['size', L.sortSize]].map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+  $('sort').value = S.sort;
+  $('reset').textContent = L.reset;
+  $('footer').textContent = `${L.footer} · ${D.generatedLabel} · ${L.repoLabel}: ${D.repos.map(r => r.name).join(', ')}`;
+
+  const maxN = Math.max(1, ...people.map(p => p.n));
+  const maxL = Math.max(1, ...people.map(p => Math.max(p.add, p.del)));
+  const maxSz = Math.sqrt(Math.max(1, ...C.map(c => c.add + c.del)));
+
+  // ---------- dynamic parts ----------
+  const haystack = c => [c.m, c.s, c.h, c.b, c.area || '', c.r, P[c.a].name].join(' ').toLowerCase();
+  const match = (c, skip) => {
+    const ql = S.query.trim().toLowerCase();
+    return (skip === 'q' || !S.q.length || S.q.includes(c.q))
+      && (skip === 'author' || !S.author.length || S.author.includes(c.a))
+      && (skip === 'repo' || !S.repo.length || S.repo.includes(c.r))
+      && (!ql || haystack(c).includes(ql));
+  };
+
+  function renderPeople() {
+    const head = `<div class="prow head"><span>${L.colPerson}</span><span>${L.colCommits}</span><span>${L.colLines}</span><span>${hasReview ? L.colQuality : ''}</span></div>`;
+    $('people').innerHTML = head + people.map(p => {
+      const d = dist(p.list);
+      return `<div class="prow${S.author.includes(p.id) ? ' sel' : ''}" data-act="person" data-id="${esc(p.id)}">
+        <div class="person"><span class="avatar">${esc(p.initials)}</span><span class="pname">${esc(p.name)}</span></div>
+        <div class="pcount num"><b>${p.n}</b><div class="track"><div style="width:${pct(p.n, maxN)};background:var(--accent)"></div></div></div>
+        <div class="plines num">
+          <div><div class="track"><div style="width:${pct(p.add, maxL)};background:var(--add)"></div></div><span class="t-add">+${fmt(p.add)}</span></div>
+          <div><div class="track"><div style="width:${pct(p.del, maxL)};background:var(--del)"></div></div><span class="t-del">−${fmt(p.del)}</span></div>
+        </div>
+        <div class="pq">${hasReview ? `
+          <div class="bar">${d.filter(x => x.n).map(x => `<div title="${esc(x.label)}: ${x.n}" style="width:${x.pct};background:${x.dot}"></div>`).join('')}</div>
+          <div class="legend num">${d.filter(x => x.n).map(x => `<span><span class="dot" style="background:${x.dot}"></span>${x.n} ${esc(x.label)}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderChips() {
+    const chip = (key, v, label, extra = '') => {
+      const n = C.filter(c => match(c, key) && (key === 'q' ? c.q : key === 'author' ? c.a : c.r) === v).length;
+      const on = S[key].includes(v);
+      return `<button type="button" class="chip${on ? ' on' : ''}${!n && !on ? ' dim' : ''}" data-act="chip" data-key="${key}" data-v="${esc(v)}">${extra}${esc(label)}<span class="n">${n}</span></button>`;
+    };
+    const all = key => `<button type="button" class="chip${S[key].length ? '' : ' on'}" data-act="chip" data-key="${key}" data-v="">${L.all}<span class="n">${C.filter(c => match(c, key)).length}</span></button>`;
+    const groups = [];
+    if (hasReview) groups.push([L.gQuality, 'q', QK.map(k => chip('q', k, L.q[k], `<span class="dot" style="background:${qv(k).dot}"></span>`))]);
+    groups.push([L.gPeople, 'author', people.map(p => chip('author', p.id, p.short, `<span class="av">${esc(p.initials)}</span>`))]);
+    if (multiRepo) groups.push([L.gRepo, 'repo', D.repos.map(r => chip('repo', r.name, r.name))]);
+    $('chips').innerHTML = groups.map(([label, key, chips]) => `<div class="chip-group"><span>${label}</span>${all(key)}${chips.join('')}</div>`).join('');
+  }
+
+  function renderCommits() {
+    let rows = C.filter(c => match(c));
+    if (S.sort === 'crit') rows = [...rows].sort((a, b) => RANK[a.q] - RANK[b.q] || a.i - b.i);
+    if (S.sort === 'size') rows = [...rows].sort((a, b) => (b.add + b.del) - (a.add + a.del));
+    $('count').textContent = L.count(rows.length, C.length);
+    $('reset').hidden = !(S.q.length || S.author.length || S.repo.length || S.query);
+    $('toggle-all').textContent = S.allOpen ? L.collapseAll : L.expandAll;
+    $('commits').innerHTML = rows.length ? rows.map(c => {
+      const v = qv(c.q);
+      const isOpen = S.open[c.h] ?? S.allOpen;
+      const sz = c.add + c.del, w = Math.sqrt(sz) / maxSz * 100;
+      const hash = c.url ? `<a class="hash" href="${esc(c.url)}" target="_blank" rel="noopener" data-stop>${esc(c.short)}</a>` : `<span class="hash">${esc(c.short)}</span>`;
+      const area = c.area ? `<span class="area">${esc(c.area)}</span>` : c.needsPrefix ? `<span class="area missing">${L.noPrefix}</span>` : '';
+      return `<div class="commit${isOpen ? ' open' : ''}" id="c-${esc(c.short)}">
+        <div class="crow" data-act="toggle" data-h="${esc(c.h)}">
+          <span class="dot" title="${esc(v.label)}" style="background:${v.dot}"></span>
+          <div class="cmain">
+            <div class="cmsg pretty">${esc(c.m)}</div>
+            <div class="cmeta">${hash}${area}<span>${esc(P[c.a].short)}</span>${c.d ? `<span class="ref">${esc(c.d)}</span>` : ''}<span class="ref">${esc(c.r)}</span><span class="ref">⎇ ${esc(c.b)}</span></div>
+          </div>
+          <div class="cstats">
+            <div class="size"><div style="width:${sz ? (w * c.add / sz).toFixed(2) : 0}%;background:var(--add)"></div><div style="width:${sz ? (w * c.del / sz).toFixed(2) : 0}%;background:var(--del)"></div></div>
+            <span class="t-add" style="width:52px">+${fmt(c.add)}</span>
+            <span class="t-del" style="width:46px">−${fmt(c.del)}</span>
+          </div>
+          ${c.q !== 'none' ? `<span class="badge" style="background:${v.bg};color:${v.fg}">${esc(v.label)}</span>` : ''}
+          <span class="chev">▸</span>
+        </div>
+        <div class="cdetail">
+          ${c.s ? `<div class="verdict pretty">${md(c.s)}</div>` : ''}
+          ${(c.notes || []).length ? `<ul class="notes">${c.notes.map(n => `<li><span class="pretty">${md(n)}</span></li>`).join('')}</ul>` : ''}
+          ${c.url ? `<a class="open-link" href="${esc(c.url)}" target="_blank" rel="noopener">${L.openOn(hostLabel(c.url))}</a>` : ''}
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty">${L.empty}</div>`;
+  }
+
+  const render = () => { renderPeople(); renderChips(); renderCommits(); };
+  const scrollTo = (el, offset) => el && window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset, behavior: 'smooth' });
+  const goList = patch => { Object.assign(S, patch); render(); scrollTo($('commits-section'), 12); };
+  const clear = { query: '', q: [], author: [], repo: [] };
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-stop]')) return;
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const act = el.dataset.act;
+    if (act === 'filter-bad') goList({ ...clear, q: ['bad'] });
+    else if (act === 'filter-warn') goList({ ...clear, q: ['warn'] });
+    else if (act === 'person') {
+      const id = el.dataset.id;
+      goList({ author: S.author.includes(id) ? S.author.filter(x => x !== id) : [...S.author, id] });
+    } else if (act === 'chip') {
+      const { key, v } = el.dataset;
+      S[key] = !v ? [] : S[key].includes(v) ? S[key].filter(x => x !== v) : [...S[key], v];
+      render();
+    } else if (act === 'toggle') {
+      const h = el.dataset.h;
+      S.open[h] = !(S.open[h] ?? S.allOpen);
+      el.parentElement.classList.toggle('open', S.open[h]);
+    } else if (act === 'jump') {
+      const h = el.dataset.h;
+      Object.assign(S, clear); S.open[h] = true;
+      $('query').value = '';
+      render();
+      scrollTo($('c-' + h.slice(0, 8)), 90);
+    }
+  });
+  $('query').addEventListener('input', e => { S.query = e.target.value; renderChips(); renderCommits(); });
+  $('sort').addEventListener('change', e => { S.sort = e.target.value; renderCommits(); });
+  $('toggle-all').addEventListener('click', () => { S.allOpen = !S.allOpen; S.open = {}; renderCommits(); });
+  $('reset').addEventListener('click', () => { Object.assign(S, clear); $('query').value = ''; render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

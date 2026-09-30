@@ -14,8 +14,11 @@ Point it at one or more repositories and a date range, and it produces:
   occasional web lookups (🌐 generic mode). Each report states which mode it used. Turn the review
   off per-repo (`"qualityReview": false`) or by asking for "stats only".
 
-Everything is rendered as a single self-contained HTML file (inline CSS, vanilla JS, inline SVG
-charts — no CDN, no external assets) and published through the Artifact tool.
+Everything is rendered as a single self-contained HTML file and published through the Artifact
+tool. The layout is a fixed template (`assets/report-template.html`: inline CSS, vanilla JS, no
+framework, light/dark theme, filters and search); the model only produces a JSON data file, which
+`scripts/build-report.mjs` validates and injects. IBM Plex is loaded from Google Fonts when
+reachable, with a system-font fallback offline.
 
 ## Install
 
@@ -33,11 +36,11 @@ The skill is then available to Claude automatically.
 
 ## Requirements
 
-The skill is pure instructions — no install step, no runtime of its own. It only leans on tools
-the host already has:
+No install step. It only leans on tools the host already has:
 
 | Tool | When needed |
 |---|---|
+| **Node.js** ≥ 18 | Always — renders the HTML (`scripts/build-report.mjs`, no dependencies). |
 | **`git`** (CLI) | Optional but recommended — required to read commit history from local repos and to shallow-clone remote ones. Without it, only the (more limited) host fallbacks apply. |
 | Network access | Only to analyze a **remote** repo (the shallow clone) or for the occasional `mgrep --web` lookup in generic quality mode. |
 | `gh` / SSH key / token | Only to clone **private** remote repos. |

@@ -115,18 +115,20 @@ appear neither in the table nor in the quality review.
 **Normalize authors**: for real users (not bots) with `*@users.noreply.github.com` emails,
 extract the username from the local part.
 
-## Step 2 — Summary table
+## Step 2 — Aggregate per contributor
 
-Show a markdown table with one column group per repo:
+Aggregate in memory (do not print a table): per author, commit count and +/− lines, per repo and
+total. The dashboard computes totals, bars and sorting itself from the per-commit data, so what you
+need at the end is simply one `people` entry per author and one `commits` entry per commit
+(see Step 6).
 
-| Contributor | <repo> commits | <repo> +/- | … | **Total commits** | **Total +lines** | **Total -lines** |
-|---|---|---|---|---|---|---|
-
-Sort by `Total commits` descending. Omit a repo's columns if it has 0 commits across everyone.
+People get a stable short `id` (initials, e.g. `FS`; disambiguate collisions with a digit), the
+full display `name`, and a `short` form for chips and rows (`F. Strappini`; single-word names stay
+as they are).
 
 ## Commit links
 
-Every hash in the details and quality cards must be a clickable link.
+Every hash in the report must be a clickable link.
 
 Resolve each repo's commit-URL template in this order:
 1. `commitUrlTemplate` in config (a string containing `{hash}`), else
@@ -138,23 +140,22 @@ Resolve each repo's commit-URL template in this order:
      → `https://github.com/org/repo/commit/{hash}`
    - GitLab → `https://<host>/org/repo/-/commit/{hash}`
    - Other gitweb/cgit hosts → `https://<host>/<repo>.git/commit/{hash}` (best effort)
-3. If no remote can be resolved, render the hash as plain text (no link).
+3. If no remote can be resolved, omit `commitUrl`: the template renders hashes as plain text.
 
-In `href` attributes use the **full** 40-char hash. Show only the first 8 chars as visible text.
+The repo **address** (`url`, linked from the page title) is the same template with the
+`/commit/{hash}` (or `/-/commit/{hash}`) suffix stripped, e.g. `https://github.com/org/repo`. Its
+**label** is `org/repo` when derivable, else the repo name.
 
-**Branch tag**: everywhere a hash is shown (details table, per-commit quality output, HTML cards),
-put the branch name right after it, separated by ` ⎇ `, e.g. `d1dd59d7 ⎇ master`. The `⎇` glyph +
-branch name is not part of the link — only the hash is clickable.
+Always pass the **full** 40-char hash (`h`); the template shows the first 8 chars and the
+`⎇ branch` tag by itself.
 
-## Step 3 — Per-repo detail
+## Step 3 — Commit-message convention
 
-For each repo with at least 1 commit, a section:
-```
-### 📦 Repo: <name>
-| Commit | Author | Message | +lines | -lines | Files |
-```
-Use the short hash (8 chars) as the visible text, linked to the commit, followed by ` ⎇ <branch>`
-(see "Commit links"), e.g. `d1dd59d7 ⎇ master`.
+Check whether the repo's guidelines prescribe a commit-message prefix (e.g. "Client, Topic,
+description"). If they do, set `prefixConvention: true` on the repo and, for each commit, put the
+leading area (e.g. `Proled`, `Framework`) in `area`; leave `area` out when the message has no
+prefix — the template then shows an orange **no prefix** chip. Repos without such a convention
+omit both, and no chip is shown.
 
 ## Step 4 — Code-quality review (per repo)
 
@@ -178,8 +179,6 @@ output below are identical for both:
   dead code, and commit-message hygiene. When unsure whether a pattern is still current for a fast-
   moving stack, confirm with a quick web lookup (`mgrep --web "<stack> <topic> best practice 2026"`)
   rather than guessing — but don't web-search every commit; reserve it for genuine uncertainty.
-  **Badge this mode clearly** so generic grades aren't mistaken for repo-endorsed rules (see
-  "Review-mode badge" below).
 
 Disable either mode by setting `"qualityReview": false` on a repo in config, or when the user asks
 for "stats only" / "no quality review". Generic mode only runs as a fallback — if a guidelines file
@@ -190,179 +189,115 @@ For each commit in the repo:
 git -C <path> show <hash> --stat --patch
 ```
 
-For each commit, produce:
-- **Quantitative**: real complexity (meaningful lines, not boilerplate)
-- **Qualitative**: correct patterns followed, problems found, suggestions
+### Review mode in the data
 
-### Review-mode badge
-
-Every report states which mode each repo used, so readers know the basis of the grades:
-- Guidelines mode → `🛡️ reviewed against CLAUDE.md` (or the actual file/list).
-- Generic mode → `🌐 generic best-practices review (no repo guidelines)`.
-
-Show this badge next to the repo name in the quality section header and in the per-repo detail.
+Every repo states which mode it used, so readers know the basis of the grades. The template
+renders it under the "Commits & code review" heading:
+- Guidelines mode → `"review": { "mode": "guidelines", "files": ["CLAUDE.md", "doc/…"] }` — list
+  the files you actually read.
+- Generic mode → `"review": { "mode": "generic", "stack": "<detected stack>" }` — rendered with a
+  🌐 badge so generic grades aren't mistaken for repo-endorsed rules.
+- Review disabled → `"review": { "mode": "off" }`, and every commit of that repo gets `"q": null`.
 
 ### Quality scale
 
 ("rules" below = the repo's guidelines in guidelines mode, or accepted best practices in generic mode.)
 
-| Emoji | Level | Criterion |
+| `q` | Level | Criterion |
 |---|---|---|
-| ✅ | Excellent | Follows all rules, clean code |
-| 🟡 | Good | Minor warnings, nothing critical |
-| 🟠 | Improvable | Sub-optimal patterns, technical debt |
-| 🔴 | Problematic | Violates rules, uses banned/unsafe patterns |
+| `ok` | Excellent | Follows all rules, clean code |
+| `warn` | Good | Minor warnings, nothing critical |
+| `impr` | Improvable | Sub-optimal patterns, technical debt |
+| `bad` | Problematic | Violates rules, uses banned/unsafe patterns |
 
-### Per-commit quality output
+### Per-commit review output
 
-```
-#### [short-hash] ⎇ [branch] — [message]
-- **Author**: [name]
-- **Files**: [main files]
-- **Quality**: ✅/🟡/🟠/🔴 [level]
-- **Notes**: [specific observations, max 3 bullets]
-```
+For each reviewed commit fill:
+- `q` — the level above.
+- `s` — a one-line verdict (≤ 80 chars), in the report language. It is the headline of the
+  expanded row and the text shown in the *Needs attention* card, so make it say *what* is wrong
+  (or right), e.g. "Hardcoded 'orca' agent for delete, no test" — not "Some issues".
+- `notes` — max 3 specific observations. Wrap identifiers in backticks (`` `fooBar` ``) and use
+  `**bold**` sparingly: the template renders only these two, everything else is escaped.
 
-## Step 5 — Final summary
+## Step 5 — Summary
 
-A closing section with:
-- Most active repo of the period
-- Most active contributor
-- For each reviewed repo: average commit quality (percentage ✅/🟡/🟠/🔴)
-- Any critical flags (🔴)
+Write 2–4 `summary` points for the *Day summary* card (the template titles it *Period summary* when
+`period` is `"range"`): the main threads of work and who drove them, patterns across commits (e.g.
+one author repeatedly skipping the message convention), and an explicit statement when there are
+no critical or security violations. Each point is one or two sentences; `**bold**` the areas.
 
-## Step 6 — Generate HTML and publish as an Artifact
+Do not duplicate stats in the summary — commit counts, most active contributor, quality
+distribution and 🔴 flags are already rendered by the template from the data. The *Needs attention*
+card is also automatic: it lists every `impr`/`bad` commit with its `s` verdict.
 
-Generate the HTML and publish it with the **Artifact** tool (do not save verbose markdown,
-do not dump to /tmp).
+## Step 6 — Build the HTML and publish as an Artifact
 
-The file must be **fully self-contained** (no CDN, no external assets). Use vanilla JS + inline
-SVG for the charts.
+The dashboard layout is **fixed**: it lives in `assets/report-template.html` and is rendered by
+`scripts/build-report.mjs` (Node, no dependencies), both inside this skill's base directory. Do
+**not** hand-write or restyle the HTML — you only produce the data. This keeps every report
+visually identical and saves generating ~40 KB of markup per run.
 
-### Mandatory first line
+1. Write the data to `{scratchpad}/{file}.json` (see "HTML file naming" for `{file}`), following the
+   schema below. `assets/example-data.json` is a complete, valid example.
+2. Build:
+   ```bash
+   node <skill-dir>/scripts/build-report.mjs {scratchpad}/{file}.json {scratchpad}/{file}.html
+   ```
+   The script validates the data (full hashes, known repo/person ids, `q` values, …) and exits
+   non-zero listing every problem. Fix the JSON and rerun — never patch the generated HTML.
+3. Publish `{scratchpad}/{file}.html` with the **Artifact** tool (see "Output").
 
-The HTML file must always start with:
-```html
-<meta charset="UTF-8">
-```
-Without this tag, web servers may serve it as ISO-8859-1 and UTF-8 characters
-(−, —, emoji, accents) appear corrupted.
+### What the template renders
 
-### Design system (always respect these values)
+- **Dark header** (always dark, theme-independent): kicker with `periodLabel`, repo title(s) linked
+  to their address, meta line, KPI strip (commits · contributors · +/− lines · % excellent ·
+  critical flags, the last one clickable → filters 🔴), quality distribution bar with legend.
+- **Summary** card (`summary`) and **Needs attention** card (auto: `impr`/`bad` commits, click to
+  jump; link to filter the `warn` ones).
+- **Contributors** table: commits bar, +/− lines bars, per-person quality bar. Click a row to
+  filter the commit list.
+- **Commits & code review**: review-mode line per repo, sticky toolbar (search, sort chronological
+  / critical first / largest first, expand all), filter chips (quality, contributor, repo — the
+  last only with 2+ repos), one expandable row per commit with verdict, notes and a link to the
+  commit.
+- Light and dark theme (`prefers-color-scheme`), responsive down to phone width.
 
-```css
-:root {
-  --bg:      #f2f4f9;
-  --surface: #ffffff;
-  --surface2:#eaecf4;
-  --border:  #d4d8e8;
-  --text:    #1a1d2e;
-  --text2:   #586080;
-  --accent:  #2563c9;
-  --accent-l:#dbeafe;
-  --green:   #15803d;
-  --red:     #b91c1c;
-  --q-ok:    #059669; --q-ok-l:  #d1fae5;
-  --q-warn:  #b45309; --q-warn-l:#fef3c7;
-  --q-impr:  #c2410c; --q-impr-l:#ffedd5;
-  --q-bad:   #991b1b; --q-bad-l: #fee2e2;
-  --radius:  6px;
-  --mono: 'SF Mono','Cascadia Code','Fira Code','Consolas',monospace;
-  /* header is ALWAYS dark, independent of light/dark theme — never derive it from --text/--bg,
-     which flip per theme and would turn light-on-light or dark-on-dark */
-  --header-bg:   #1a1d2e;
-  --header-text: #e2e8f0;
-}
-body { font-family: system-ui,-apple-system,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); font-size:13.5px; line-height:1.55; padding:0 0 3rem; }
-```
+Quality-related parts (KPIs, bar, attention card, quality column and chips, critical-first sort)
+disappear automatically when no commit has a `q`, so a "stats only" report needs no special
+handling.
 
-**Critical pitfall (recurring bug — check every time):** the header must use `--header-bg`/
-`--header-text`, fixed hex values that do NOT change with `@media (prefers-color-scheme: dark)`
-or `:root[data-theme]` overrides. Do **not** write `background: var(--text)` for the header —
-`--text` itself flips between dark and light hex values across themes, so a header styled that
-way renders unreadable (light text on light background) in dark mode. Before publishing, grep the
-generated HTML for `.page-header` and confirm its background/color rules are NOT `var(--text)` or
-`var(--bg)`.
+### Data schema
 
-### HTML structure
-
-#### 1. Dark header
-```html
-<div class="page-header"> <!-- background: var(--header-bg), color: var(--header-text) — fixed, theme-independent -->
-  <div class="date-badge">Day Month Year</div> <!-- accent-blue pill -->
-  <h1>Commit Report — [repo name(s)] — [period label]</h1>
-  <div class="repos-line"><!-- one entry per repo: name linked to its address -->
-    <a href="{repo_url}" target="_blank">{repo_name}</a> · …
-  </div>
-  <div class="meta">bots excluded · generated [date]</div>
-</div>
-```
-
-Put the **repo name(s)** in the `<h1>` title (single repo → its name; 2–3 → `+`-joined; 4+ →
-`multi`, matching the filename rule). The `.repos-line` lists each repo as a clickable link to
-its **address**: the repo's web home page derived from the `origin` remote — i.e. the
-`commitUrlTemplate` with the `/commit/{hash}` (or `/-/commit/{hash}`) suffix stripped
-(e.g. `https://github.com/org/repo`). If a repo has no resolvable remote, show its name as
-plain text (no link).
-
-#### 2. Stat strip (white, border-bottom)
-5 pills: **Total commits · Contributors · +lines (green) · −lines (red) · Active repos**
-
-#### 3. Charts in a 2-col grid (`display:grid; grid-template-columns:1fr 1fr; gap:1rem`)
-- **Bar chart, commits per contributor** — horizontal bars, distinct color per contributor,
-  label on the left (110px), value inside the bar
-- **Bar chart, lines changed** — green +lines bar, red −lines value outside the bar on the right
-- **Quality donut (SVG)** — only if at least one repo was reviewed; r=38, stroke-width=17,
-  colors: ✅ `#059669` 🟡 `#fbbf24` 🟠 `#f97316` 🔴 `#ef4444`; legend alongside
-- **Per-contributor quality table** — columns: Contributor · ✅ · 🟡 · 🟠 · 🔴
-
-#### 4. Contributor summary table
-Columns: Contributor · [one column per active repo with commits + lines] · Total commits ·
-Total +lines · Total −lines. Sort by Total commits desc.
-`font-variant-numeric: tabular-nums` on all numeric cells.
-
-#### 5. Per-repo commit detail (JS accordion)
-One collapsible block per repo. Each commit is a `.commit-card` with:
-- `border-left: 3px solid var(--accent)` (cycle a few accent colors across repos for contrast)
-- Header: `<a href="{commit_url}" target="_blank" class="hash">{short_hash}</a> <span class="branch">⎇ {branch}</span>` ·
-  message · time · author
-- Main files row
-- Stats +lines / −lines
-
-**Hashes are always clickable links** (see "Commit links"), immediately followed by their
-`⎇ {branch}` tag.
-
-#### 6. Quality review (only for reviewed repos)
-One `.quality-card` per commit:
-```html
-<div class="quality-card">
-  <div class="qcard-header">
-    <a href="{commit_url}" target="_blank" class="hash">{short_hash}</a>
-    <span class="branch">⎇ {branch}</span>
-    <span class="badge q-ok|q-warn|q-impr|q-bad">✅/🟡/🟠/🔴 Level</span>
-    <span class="qcard-msg">{message}</span>
-    <span class="qcard-author">{author} · {time}</span>
-  </div>
-  <ul class="notes">
-    <li>observation 1</li>
-  </ul>
-</div>
-```
-
-#### 7. Summary
-Pills: most active repo · most active contributor · average quality · 🔴 flags · notes
-
-#### 8. Footer
-`Generated by commit-report skill · {date} · repos: {list}`
-
-### JS accordion
-```js
-function toggle(btn) {
-  const c = btn.nextElementSibling;
-  const open = c.classList.toggle('open');
-  btn.setAttribute('aria-expanded', open);
+```jsonc
+{
+  "lang": "it",                        // "it" | "en" — match the user's message language
+  "period": "day",                     // "day" | "range"
+  "periodLabel": "martedì 29 settembre 2026",   // or "22–28 settembre 2026"
+  "generatedLabel": "30 settembre 2026, 08:06",
+  "title": "…",                        // optional <title>; default "Commit Report — {repos} — {periodLabel}"
+  "defaultSort": "chrono",             // optional: "chrono" | "crit" | "size"
+  "repos": [{
+    "name": "hydra",                   // matches commits[].r
+    "label": "nextsrlit/hydra",        // optional, title text; default name
+    "url": "https://github.com/nextsrlit/hydra",                  // optional
+    "commitUrl": "https://github.com/nextsrlit/hydra/commit/{hash}", // optional
+    "prefixConvention": true,          // optional, see Step 3
+    "review": { "mode": "guidelines", "files": ["CLAUDE.md"] }     // see Step 4
+  }],
+  "people": [{ "id": "FS", "name": "Francesco Strappini", "short": "F. Strappini" }],
+  "summary": ["Point with **bold** and `code`."],
+  "commits": [{
+    "h": "<40-char hash>", "r": "hydra", "a": "FS", "b": "dev",
+    "m": "<commit subject>", "area": "Framework",   // area optional
+    "d": "29/09",                      // optional short date — set it for multi-day ranges
+    "add": 206, "del": 67,
+    "q": "ok", "s": "<one-line verdict>", "notes": ["…"]
+  }]
 }
 ```
+
+List `commits` newest first (git log order): that is the "chronological" sort.
 
 ## HTML file naming
 
@@ -393,8 +328,9 @@ Rules:
 
 **Do not produce verbose markdown output.** Everything goes into the Artifact.
 
-Write the HTML to the session scratchpad with the name computed above, then publish it with the
-**Artifact** tool (favicon `📊`, label = filename without `.html`).
+Build the HTML into the session scratchpad with the name computed above (Step 6), then publish it
+with the **Artifact** tool (icon `chart`, label = filename without `.html`). Delete the `.json`
+data file afterwards unless the user asks to keep it.
 
 ### Optional extra publish target
 
@@ -411,7 +347,8 @@ Artifact: https://claude.ai/code/artifact/...
 Web:      https://<host>/<path>/{file}.html
 ```
 
-HTML language: match the language of the user's message.
+HTML language: match the language of the user's message (`lang`; the template ships `it` and `en`
+labels — for any other language use `en`).
 
 ## Config schema
 
