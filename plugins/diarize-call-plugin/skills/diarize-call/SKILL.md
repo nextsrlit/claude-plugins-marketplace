@@ -33,7 +33,7 @@ If the provider's API key is missing, stop and ask the user to set it before pro
 At startup, ask the user (in a single message, not one question at a time) unless already provided:
 
 1. **File** — path to the video/audio file.
-2. **Number of speakers** — how many people speak actively (not just how many are present). Goes into `--speakers`. This is only a *hint*: AssemblyAI may detect more (very short interjections become separate speakers). Don't assume the final count matches.
+2. **Number of speakers** — how many people speak actively (not just how many are present). Goes into `--speakers` (sent as a range N..N+2, not an exact count). This is only a *hint*: AssemblyAI may detect more (very short interjections become separate speakers). Don't assume the final count matches.
 3. **Language** — ISO language code (`en`, `it`, `fr`, ...). Goes into `--lang`. ⚠️ If the call is **multilingual or uncertain**, **omit `--lang`**: `diarize.js` does auto-detect, which is safer than forcing the wrong language (forcing `en` on a different-language call can hallucinate words). Only force `--lang` when you're sure it's monolingual.
 4. **Context** — 1–3 sentences about what the call covers (project, client, topic). Greatly improves ASR accuracy. Goes into `--context`.
 5. **Key terms** — technical terms, abbreviations, proper nouns, product names the ASR might mangle. Goes into `--keyterms`.
@@ -72,7 +72,7 @@ bash ~/.claude/skills/diarize-call/scripts/diarize.sh "<file>" \
 
 Notes:
 - `--out` with `.md` extension; the raw JSON is written alongside as `<base>-raw.json`.
-- `--context` and `--keyterms` are combined into a single `prompt` field (universal3+) — they work fine together.
+- `--context` and `--keyterms` are combined into a single `prompt` field — they work fine together.
 - If the user also wants the provider's built-in summary, add `--summary`, but the real summary you write yourself in step 4 will be richer.
 - The script checks for `curl`, `jq`, `ffmpeg`, `ffprobe` at startup and exits with install instructions if any are missing.
 

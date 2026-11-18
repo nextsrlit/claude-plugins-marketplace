@@ -186,7 +186,9 @@ if [ "$provider" = "assemblyai" ]; then
     '{
       audio_url: $url,
       speaker_labels: true,
-      speech_models: ["universal-3-5-pro", "universal-2"]
+      speech_models: ["assemblyai-stt-3-7", "universal-2"],
+      disfluencies: false,
+      format_text: true
     }')
 
   if [ -n "$lang" ]; then
@@ -195,8 +197,10 @@ if [ "$provider" = "assemblyai" ]; then
     body=$(echo "$body" | jq '. + {language_detection: true}')
   fi
 
+  # --speakers is only a hint: an exact speakers_expected that is wrong splits/merges speakers,
+  # so send a range (N .. N+2) via speaker_options instead.
   if [ -n "$speakers" ]; then
-    body=$(echo "$body" | jq --argjson n "$speakers" '. + {speakers_expected: $n}')
+    body=$(echo "$body" | jq --argjson n "$speakers" '. + {speaker_options: {min_speakers_expected: $n, max_speakers_expected: ($n + 2)}}')
   elif [ -n "$speakers_min" ] || [ -n "$speakers_max" ]; then
     sp_opts='{}'
     [ -n "$speakers_min" ] && sp_opts=$(echo "$sp_opts" | jq --argjson n "$speakers_min" '. + {min_speakers_expected: $n}')
@@ -222,10 +226,10 @@ if [ "$provider" = "assemblyai" ]; then
   fi
 
   if $do_summary; then
-    body=$(echo "$body" | jq '. + {summarization: true, summary_type: "bullets", summary_model: "conversational"}')
+    body=$(echo "$body" | jq '. + {speech_understanding: {request: {summarization: {summary_type: "bullets"}}}}')
   fi
 
-  echo "🎙️  Transcribing (AssemblyAI universal-3-5-pro)..."
+  echo "🎙️  Transcribing (AssemblyAI assemblyai-stt-3-7)..."
   response=$(curl -s -X POST https://api.assemblyai.com/v2/transcript \
     -H "Authorization: $ASSEMBLYAI_API_KEY" \
     -H "Content-Type: application/json" \
@@ -254,6 +258,9 @@ if [ "$provider" = "assemblyai" ]; then
         printf '.' ; sleep 5 ;;
     esac
   done
+
+  # Flatten speech_understanding summary to a top-level string (shared output format)
+  result=$(echo "$result" | jq '. + {summary: ((.speech_understanding.response.summarization.summary // []) | map(.text // ((.bullets // []) | map("- " + .) | join("\n"))) | join("\n\n"))}')
 
 elif [ "$provider" = "gladia" ]; then
 
