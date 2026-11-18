@@ -277,9 +277,9 @@ elif [ "$provider" = "gladia" ]; then
   body=$(jq -n --arg url "$upload_url" '{audio_url: $url, diarization: true}')
 
   if [ -n "$lang" ]; then
-    body=$(echo "$body" | jq --arg lang "$lang" '. + {language: $lang, detect_language: false}')
+    body=$(echo "$body" | jq --arg lang "$lang" '. + {language_config: {languages: [$lang], code_switching: false}}')
   else
-    body=$(echo "$body" | jq '. + {detect_language: true}')
+    body=$(echo "$body" | jq '. + {language_config: {languages: [], code_switching: false}}')
   fi
 
   if [ -n "$speakers" ]; then
@@ -336,7 +336,7 @@ elif [ "$provider" = "deepgram" ]; then
     *)    ctype="audio/mp4"  ;;
   esac
 
-  params="diarize=true&utterances=true&punctuate=true&model=nova-3"
+  params="diarize_model=latest&utterances=true&punctuate=true&model=nova-3"
 
   if [ -n "$lang" ]; then
     params="$params&language=$lang"
@@ -345,7 +345,10 @@ elif [ "$provider" = "deepgram" ]; then
   fi
 
   if $do_summary; then
-    params="$params&summarize=v2"
+    case "${lang:-}" in
+      ""|en|en-*) params="$params&summarize=v2" ;;
+      *) echo "⚠️  --summary skipped for Deepgram: summarization is English-only (lang=$lang)" ;;
+    esac
   fi
 
   # --speakers* not supported by Deepgram nova-3 diarization
